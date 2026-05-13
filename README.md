@@ -2,11 +2,46 @@
   <img src="https://docs.hlquery.com/img/hlquery/2.png" alt="hlquery logo" width="200">
 </div>
 
-### hlquery TypeScript API
+<div align="center">
 
-TypeScript client library for hlquery, modeled after the JavaScript client in `etc/api/node`.
+**A typed TypeScript client library for hlquery, designed with a familiar modular API structure.**
 
-It exposes the same modular shape:
+[![Follow hlquery](https://img.shields.io/badge/Follow-%40hlquery-blue?logo=x&logoColor=white)](https://x.com/hlquery)
+[![GitHub](https://img.shields.io/badge/GitHub-type--api-181717?logo=github&logoColor=white)](https://github.com/hlquery/type-api/stargazers)
+[![hlquery](https://img.shields.io/badge/GitHub-hlquery-blue?logo=github&logoColor=white)](https://github.com/hlquery/hlquery/stargazers)
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+
+</div>
+
+### What is the hlquery TypeScript API?
+
+The hlquery TypeScript API is the official TypeScript client for hlquery. It wraps the HTTP/JSON interface in typed classes so TypeScript and Node.js applications can work with hlquery without manually assembling URLs, request bodies, auth headers, and response parsing.
+
+The library follows the same modular service layout as the JavaScript client: collections, documents, search, SQL, SAM, aliases, synonyms, stopwords, overrides, keys, and raw request access.
+
+### Why use it?
+
+Use the TypeScript API when you want hlquery integration to be explicit, typed, and easy to refactor. The client keeps common operations readable, centralizes auth handling, and gives editors and build tools useful method signatures for the hlquery API surface.
+
+### Why choose it over raw HTTP?
+
+Choose the TypeScript client over raw HTTP when you want less boilerplate around `fetch`, headers, query parameters, JSON encoding, and response handling. It gives you one consistent interface for indexing, search, SQL, SAM, and administrative calls while still keeping `executeRequest()` available for custom routes.
+
+### Install
+
+```bash
+npm install hlquery-typescript-client
+```
+
+For local development inside this repository:
+
+```bash
+npm install
+npm run build
+npm test
+```
+
+### Quick Start
 
 ```ts
 import Client from 'hlquery-typescript-client';
@@ -23,12 +58,43 @@ console.log(health.getStatusCode());
 console.log(collections.getBody());
 ```
 
-### Local Development
+### Example: Index and Search
 
-```bash
-npm install
-npm run build
-npm test
+```ts
+import Client from 'hlquery-typescript-client';
+
+async function main(): Promise<void> {
+  const client = new Client('http://localhost:9200');
+
+  await client.collections().create('products', {
+    fields: [
+      { name: 'id', type: 'string' },
+      { name: 'title', type: 'string' },
+      { name: 'content', type: 'string' },
+      { name: 'price', type: 'float' },
+    ],
+    searchable_fields: ['title', 'content'],
+    filterable_fields: ['price'],
+    sortable_fields: ['price'],
+  });
+
+  await client.documents().add('products', {
+    id: 'product1',
+    title: 'Laptop Computer',
+    content: 'High-performance laptop with 16GB RAM',
+    price: 1299.99,
+  });
+
+  const results = await client.search('products', {
+    q: 'laptop',
+    query_by: ['title', 'content'],
+    limit: 10,
+  });
+
+  console.log(results.getBody());
+}
+
+main().catch(console.error);
 ```
 
 ### API Shape
