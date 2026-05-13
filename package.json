@@ -1,0 +1,36 @@
+{
+  "name": "hlquery-typescript-client",
+  "version": "1.0.0",
+  "description": "TypeScript client library for hlquery search engine",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && node test/offline-smoke.js",
+    "example": "npm run build && node -e \"const Client = require('./dist'); console.log(typeof Client)\""
+  },
+  "dependencies": {
+    "pdf-parse": "^2.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "typescript": "^5.4.5"
+  },
+  "keywords": [
+    "hlquery",
+    "search",
+    "client",
+    "api",
+    "typescript"
+  ],
+  "author": "Carlos F. Ferry <carlos.ferry@gmail.com>",
+  "license": "BSD-3-Clause",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cferry/hlquery"
+  }
+}
