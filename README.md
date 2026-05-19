@@ -7,7 +7,8 @@
 **A typed TypeScript client library for hlquery, designed with a familiar modular API structure.**
 
 [![Follow hlquery](https://img.shields.io/badge/Follow-%40hlquery-blue?logo=x&logoColor=white)](https://x.com/hlquery)
-[![GitHub](https://img.shields.io/badge/GitHub-type--api-181717?logo=github&logoColor=white)](https://github.com/hlquery/type-api/stargazers)
+[![TypeScript API CI](https://github.com/hlquery/type-api/actions/workflows/ci.yml/badge.svg)](https://github.com/hlquery/type-api/actions/workflows/ci.yml)
+[![GitHub](https://img.shields.io/badge/GitHub-type--api-purple?logo=github&logoColor=white)](https://github.com/hlquery/type-api/stargazers)
 [![hlquery](https://img.shields.io/badge/GitHub-hlquery-blue?logo=github&logoColor=white)](https://github.com/hlquery/hlquery/stargazers)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
@@ -30,15 +31,15 @@ Choose the TypeScript client over raw HTTP when you want less boilerplate around
 ### Install
 
 ```bash
-npm install hlquery-typescript-client
+$ npm install hlquery-typescript-client
 ```
 
 For local development inside this repository:
 
 ```bash
-npm install
-npm run build
-npm test
+$ npm install
+$ npm run build
+$ npm test
 ```
 
 ### Quick Start
@@ -97,18 +98,3 @@ async function main(): Promise<void> {
 main().catch(console.error);
 ```
 
-### API Shape
-
-- `client.collections()`
-- `client.documents()`
-- `client.searchApi()`
-- `client.system()`
-- `client.sam()`
-- `client.keys()`
-- `client.aliases()`
-- `client.synonyms()`
-- `client.stopwords()`
-- `client.overrides()`
-- `client.executeRequest(method, path, body, queryParams)`
-
-The package compiles to CommonJS and emits TypeScript declarations in `dist/`.
