@@ -24,10 +24,6 @@ The library follows the same modular service layout as the JavaScript client: co
 
 Use the TypeScript API when you want hlquery integration to be explicit, typed, and easy to refactor. The client keeps common operations readable, centralizes auth handling, and gives editors and build tools useful method signatures for the hlquery API surface.
 
-### Why choose it over raw HTTP?
-
-Choose the TypeScript client over raw HTTP when you want less boilerplate around `fetch`, headers, query parameters, JSON encoding, and response handling. It gives you one consistent interface for indexing, search, SQL, SAM+, and administrative calls while still keeping `executeRequest()` available for custom routes.
-
 ### Install
 
 ```bash
