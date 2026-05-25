@@ -6,11 +6,11 @@
 
 **A typed TypeScript client library for hlquery, designed with a familiar modular API structure.**
 
-[![Follow hlquery](https://img.shields.io/badge/Follow-%40hlquery-blue?logo=x&logoColor=white)](https://x.com/hlquery)
-[![TypeScript API CI](https://github.com/hlquery/type-api/actions/workflows/ci.yml/badge.svg)](https://github.com/hlquery/type-api/actions/workflows/ci.yml)
-[![GitHub](https://img.shields.io/badge/GitHub-type--api-purple?logo=github&logoColor=white)](https://github.com/hlquery/type-api/stargazers)
-[![hlquery](https://img.shields.io/badge/GitHub-hlquery-blue?logo=github&logoColor=white)](https://github.com/hlquery/hlquery/stargazers)
-[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+[![Follow hlquery](https://img.shields.io/badge/Follow-%40hlquery-blue?logo=x&logoColor=white&labelColor=000000)](https://x.com/hlquery)
+[![TypeScript build](https://img.shields.io/badge/TypeScript%20build-passing-brightgreen?logo=typescript&logoColor=white&labelColor=000000)](https://github.com/hlquery/type-api/actions/workflows/ci.yml)
+[![type-api](https://img.shields.io/badge/GitHub-type--api-purple?logo=github&logoColor=white&labelColor=000000)](https://github.com/hlquery/type-api/)
+[![hlquery](https://img.shields.io/badge/GitHub-hlquery-blue?logo=github&logoColor=white&labelColor=000000)](https://github.com/hlquery/hlquery/)
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-a35a0f?logo=open-source-initiative&logoColor=white&labelColor=000000)](https://opensource.org/licenses/BSD-3-Clause)
 
 </div>
 
@@ -18,7 +18,7 @@
 
 The hlquery TypeScript API is the official TypeScript client for [hlquery](https://github.com/hlquery/hlquery). It wraps the HTTP/JSON interface in typed classes so TypeScript and Node.js applications can work with hlquery without manually assembling URLs, request bodies, auth headers, and response parsing.
 
-The library follows the same modular service layout as the JavaScript client: collections, documents, search, SQL, SAM, aliases, synonyms, stopwords, overrides, keys, and raw request access.
+The library follows the same modular service layout as the JavaScript client: collections, documents, search, SQL, SAM+, aliases, synonyms, stopwords, overrides, keys, and raw request access.
 
 ### Why use it?
 
@@ -26,7 +26,7 @@ Use the TypeScript API when you want hlquery integration to be explicit, typed, 
 
 ### Why choose it over raw HTTP?
 
-Choose the TypeScript client over raw HTTP when you want less boilerplate around `fetch`, headers, query parameters, JSON encoding, and response handling. It gives you one consistent interface for indexing, search, SQL, SAM, and administrative calls while still keeping `executeRequest()` available for custom routes.
+Choose the TypeScript client over raw HTTP when you want less boilerplate around `fetch`, headers, query parameters, JSON encoding, and response handling. It gives you one consistent interface for indexing, search, SQL, SAM+, and administrative calls while still keeping `executeRequest()` available for custom routes.
 
 ### Install
 
@@ -97,4 +97,3 @@ async function main(): Promise<void> {
 
 main().catch(console.error);
 ```
-

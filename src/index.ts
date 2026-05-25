@@ -471,6 +471,11 @@ export class Collections {
       sortable_fields: body.sortable_fields || [],
     });
   }
+
+  async getLanguage(name: string): Promise<Response> {
+    Validator.validateCollectionName(name);
+    return this.request.execute('GET', `/collections/${encode(name)}/lang`);
+  }
 }
 
 export class Documents {
@@ -517,6 +522,17 @@ export class Documents {
 
   async facetCounts(collectionName: string, params: SearchParams = {}): Promise<Response> {
     return this.collectionDocumentQuery(collectionName, 'facet_counts', params);
+  }
+
+  async maybe(collectionName: string, params: SearchParams = {}): Promise<Response> {
+    return this.collectionDocumentQuery(collectionName, 'maybe', params);
+  }
+
+  async context(collectionName: string, documentId: string | number, params: QueryParams = {}): Promise<Response> {
+    Validator.validateCollectionName(collectionName);
+    Validator.validateDocumentId(documentId);
+    requireObject(params, 'Document context params');
+    return this.request.execute('GET', `/collections/${encode(collectionName)}/documents/${encode(documentId)}/context`, null, params);
   }
 
   async export(collectionName: string, params: SearchParams = {}): Promise<Response> {
@@ -697,7 +713,9 @@ export class System {
   constructor(private readonly request: Request) {}
 
   health(): Promise<Response> { return this.request.execute('GET', '/health'); }
+  ready(): Promise<Response> { return this.request.execute('GET', '/ready'); }
   status(): Promise<Response> { return this.request.execute('GET', '/status'); }
+  query(): Promise<Response> { return this.request.execute('GET', '/query'); }
   startup(): Promise<Response> { return this.request.execute('GET', '/startup'); }
   bootStatus(): Promise<Response> { return this.request.execute('GET', '/boot-status'); }
   info(): Promise<Response> { return this.request.execute('GET', '/'); }
@@ -714,6 +732,12 @@ export class System {
   consistency(): Promise<Response> { return this.request.execute('GET', '/consistency'); }
   selfCheck(): Promise<Response> { return this.request.execute('GET', '/self-check'); }
   storageStatus(): Promise<Response> { return this.request.execute('GET', '/admin/storage_status'); }
+  searchConfig(): Promise<Response> { return this.request.execute('GET', '/search-config'); }
+  llm(): Promise<Response> { return this.request.execute('GET', '/llm'); }
+  updateCounters(params: QueryParams = {}): Promise<Response> { return this.request.execute('GET', '/update-counters', null, params); }
+  repair(params: QueryParams = {}): Promise<Response> { return this.request.execute('GET', '/repair', null, params); }
+  updateCountersPost(body: Record<string, unknown> = {}): Promise<Response> { return this.request.execute('POST', '/update-counters', body); }
+  repairPost(body: Record<string, unknown> = {}): Promise<Response> { return this.request.execute('POST', '/repair', body); }
 
   async sql(sql: string, params: QueryParams = {}): Promise<Response> {
     requireNonEmptyString(sql, 'SQL query');
@@ -800,6 +824,28 @@ export class SAM {
     return this.pause(0, params);
   }
 
+  async improve(params: Record<string, unknown> = {}): Promise<Response> {
+    requireObject(params, 'SAM improve params');
+    return this.request.execute('POST', '/sam/improve', params);
+  }
+
+  async flushActorMetadata(params: Record<string, unknown> = {}): Promise<Response> {
+    requireObject(params, 'SAM flush actor metadata params');
+    return this.request.execute('POST', '/sam/flush_actor_metadata', params);
+  }
+
+  async addLabel(collectionName: string, documentId: string | number, label: string, params: Record<string, unknown> = {}): Promise<Response> {
+    Validator.validateCollectionName(collectionName);
+    Validator.validateDocumentId(documentId);
+    requireNonEmptyString(label, 'SAM label');
+    requireObject(params, 'SAM label params');
+    return this.request.execute(
+      'POST',
+      `/sam/label/add/${encode(collectionName)}/${encode(documentId)}/${encode(label)}`,
+      params
+    );
+  }
+
   async listDocuments(collectionName: string, offset = 0, limit = 20, params: QueryParams = {}): Promise<Response> {
     Validator.validateCollectionName(collectionName);
     requireObject(params, 'SAM document list params');
@@ -844,6 +890,26 @@ export class Keys {
   }
   update(id: string, params: Record<string, unknown>): Promise<Response> { requireNonEmptyString(id, 'Key ID'); return this.request.execute('PUT', `/keys/${encode(id)}`, params); }
   delete(id: string): Promise<Response> { requireNonEmptyString(id, 'Key ID'); return this.request.execute('DELETE', `/keys/${encode(id)}`); }
+}
+
+export class Users {
+  constructor(private readonly request: Request) {}
+  list(): Promise<Response> { return this.request.execute('GET', '/users'); }
+  get(id: string): Promise<Response> { requireNonEmptyString(id, 'User ID'); return this.request.execute('GET', `/users/${encode(id)}`); }
+  create(params: Record<string, unknown>): Promise<Response> { requireObject(params, 'User params'); return this.request.execute('POST', '/users', params); }
+  update(id: string, params: Record<string, unknown>): Promise<Response> { requireNonEmptyString(id, 'User ID'); requireObject(params, 'User params'); return this.request.execute('PUT', `/users/${encode(id)}`, params); }
+  delete(id: string): Promise<Response> { requireNonEmptyString(id, 'User ID'); return this.request.execute('DELETE', `/users/${encode(id)}`); }
+}
+
+export class Modules {
+  constructor(private readonly request: Request) {}
+  list(): Promise<Response> { return this.request.execute('GET', '/modules'); }
+  syntax(name: string): Promise<Response> { requireNonEmptyString(name, 'Module name'); return this.request.execute('GET', `/modules/${encode(name)}/syntax`); }
+  call(name: string, route = '', method: HttpMethod | string = 'GET', body: RequestBody = null, params: QueryParams = {}): Promise<Response> {
+    requireNonEmptyString(name, 'Module name');
+    const suffix = route ? `/${route.replace(/^\/+/, '')}` : '';
+    return this.request.execute(method, `/modules/${encode(name)}${suffix}`, body, params);
+  }
 }
 
 export class Aliases {
@@ -906,12 +972,14 @@ export class Client {
   private readonly _documents: Documents;
   private readonly _search: Search;
   private readonly _keys: Keys;
+  private readonly _users: Users;
   private readonly _aliases: Aliases;
   private readonly _overrides: Overrides;
   private readonly _synonyms: Synonyms;
   private readonly _stopwords: Stopwords;
   private readonly _system: System;
   private readonly _sam: SAM;
+  private readonly _modules: Modules;
 
   constructor(baseUrl: string | null = null, options: ClientOptions = {}) {
     const opts = Config.mergeDefaults(options);
@@ -924,22 +992,26 @@ export class Client {
     this._documents = new Documents(this.request);
     this._search = new Search(this.request, this._collections);
     this._keys = new Keys(this.request);
+    this._users = new Users(this.request);
     this._aliases = new Aliases(this.request);
     this._overrides = new Overrides(this.request);
     this._synonyms = new Synonyms(this.request);
     this._stopwords = new Stopwords(this.request);
     this._system = new System(this.request);
     this._sam = new SAM(this.request);
+    this._modules = new Modules(this.request);
   }
 
   setAuthToken(token: string, method: AuthMethod = 'bearer'): this { this.request.setAuthToken(token, method); return this; }
   clearAuth(): this { this.request.clearAuth(); return this; }
 
   health(): Promise<Response> { return this._system.health(); }
+  ready(): Promise<Response> { return this._system.ready(); }
   stats(): Promise<Response> { return this._system.stats(); }
   etc(): Promise<Response> { return this._system.etc(); }
   info(): Promise<Response> { return this._system.info(); }
   status(): Promise<Response> { return this._system.status(); }
+  query(): Promise<Response> { return this._system.query(); }
   startup(): Promise<Response> { return this._system.startup(); }
   bootStatus(): Promise<Response> { return this._system.bootStatus(); }
   metrics(): Promise<Response> { return this._system.metrics(); }
@@ -953,6 +1025,12 @@ export class Client {
   consistency(): Promise<Response> { return this._system.consistency(); }
   selfCheck(): Promise<Response> { return this._system.selfCheck(); }
   storageStatus(): Promise<Response> { return this._system.storageStatus(); }
+  searchConfig(): Promise<Response> { return this._system.searchConfig(); }
+  llm(): Promise<Response> { return this._system.llm(); }
+  updateCounters(params: QueryParams = {}): Promise<Response> { return this._system.updateCounters(params); }
+  repair(params: QueryParams = {}): Promise<Response> { return this._system.repair(params); }
+  updateCountersPost(body: Record<string, unknown> = {}): Promise<Response> { return this._system.updateCountersPost(body); }
+  repairPost(body: Record<string, unknown> = {}): Promise<Response> { return this._system.repairPost(body); }
   sql(sql: string, params: QueryParams = {}): Promise<Response> { return this._system.sql(sql, params); }
   execSql(sql: string): Promise<Response> { return this._system.execSql(sql); }
 
@@ -981,6 +1059,11 @@ export class Client {
   samHistory(collectionName: string | null = null, limit = 100, params: QueryParams = {}): Promise<Response> { return this._sam.history(collectionName, limit, params); }
   samPause(pauseUntilMs: number, params: QueryParams = {}): Promise<Response> { return this._sam.pause(pauseUntilMs, params); }
   samClearPause(params: QueryParams = {}): Promise<Response> { return this._sam.clearPause(params); }
+  samImprove(params: Record<string, unknown> = {}): Promise<Response> { return this._sam.improve(params); }
+  samFlushActorMetadata(params: Record<string, unknown> = {}): Promise<Response> { return this._sam.flushActorMetadata(params); }
+  samAddLabel(collectionName: string, documentId: string | number, label: string, params: Record<string, unknown> = {}): Promise<Response> {
+    return this._sam.addLabel(collectionName, documentId, label, params);
+  }
   samDocuments(collectionName: string, offset = 0, limit = 20, params: QueryParams = {}): Promise<Response> { return this._sam.listDocuments(collectionName, offset, limit, params); }
   samDocument(collectionName: string, documentId: string | number, params: QueryParams = {}): Promise<Response> { return this._sam.getDocument(collectionName, documentId, params); }
   samOpenDocument(collectionName: string, documentId: string | number, interactionQuery: string | null = null, params: QueryParams = {}): Promise<Response> {
@@ -992,15 +1075,22 @@ export class Client {
   stopwords(): Stopwords { return this._stopwords; }
   system(): System { return this._system; }
   keys(): Keys { return this._keys; }
+  users(): Users { return this._users; }
+  modules(): Modules { return this._modules; }
 
   listCollections(offset = 0, limit = 10): Promise<Response> { return this._collections.list(offset, limit); }
   listCollectionsDistributed(): Promise<Response> { return this.request.execute('GET', '/collections/distributed'); }
   getCollection(name: string): Promise<Response> { return this._collections.get(name); }
   getCollectionFields(name: string): Promise<Response> { return this._collections.getFields(name); }
+  getCollectionLanguage(name: string): Promise<Response> { return this._collections.getLanguage(name); }
   listDocuments(collectionName: string, params: SearchParams = {}): Promise<Response> { return this._documents.list(collectionName, params); }
   getDocument(collectionName: string, documentId: string | number): Promise<Response> { return this._documents.get(collectionName, documentId); }
   exportDocuments(collectionName: string, params: SearchParams = {}): Promise<Response> { return this._documents.export(collectionName, params); }
   facetCounts(collectionName: string, params: SearchParams = {}): Promise<Response> { return this._documents.facetCounts(collectionName, params); }
+  maybe(collectionName: string, params: SearchParams = {}): Promise<Response> { return this._documents.maybe(collectionName, params); }
+  documentContext(collectionName: string, documentId: string | number, params: QueryParams = {}): Promise<Response> {
+    return this._documents.context(collectionName, documentId, params);
+  }
   search(collectionName: string, params: SearchParams = {}): Promise<Response> { return this._search.search(collectionName, params); }
   sqlSearch(collectionName: string, sql: string, params: QueryParams = {}): Promise<Response> { return this._search.sql(collectionName, sql, params); }
   vectorSearch(collectionName: string, params: VectorSearchParams = {}): Promise<Response> { return this._search.vectorSearch(collectionName, params); }
@@ -1028,14 +1118,28 @@ export class Client {
 export const NODE_CLIENT_ROUTE_COVERAGE = [
   { path: '/', methods: ['GET'], status: 'supported', client: 'system.info' },
   { path: '/health', methods: ['GET'], status: 'supported', client: 'system.health' },
+  { path: '/ready', methods: ['GET'], status: 'supported', client: 'system.ready' },
   { path: '/status', methods: ['GET'], status: 'supported', client: 'system.status' },
+  { path: '/query', methods: ['GET'], status: 'supported', client: 'system.query' },
   { path: '/startup', methods: ['GET'], status: 'supported', client: 'system.startup' },
   { path: '/boot-status', methods: ['GET'], status: 'supported', client: 'system.bootStatus' },
   { path: '/stats', methods: ['GET'], status: 'supported', client: 'system.stats' },
   { path: '/metrics', methods: ['GET'], status: 'supported', client: 'system.metrics' },
   { path: '/metrics.json', methods: ['GET'], status: 'supported', client: 'system.metricsJson' },
+  { path: '/search-config', methods: ['GET'], status: 'supported', client: 'system.searchConfig' },
+  { path: '/llm', methods: ['GET'], status: 'supported', client: 'system.llm' },
+  { path: '/update-counters', methods: ['GET', 'POST'], status: 'supported', client: 'system.updateCounters/updateCountersPost' },
+  { path: '/repair', methods: ['GET', 'POST'], status: 'supported', client: 'system.repair/repairPost' },
+  { path: '/users', methods: ['GET', 'POST'], status: 'supported', client: 'users.list/create' },
+  { path: '/users/{id}', methods: ['GET', 'PUT', 'DELETE'], status: 'supported', client: 'users.get/update/delete' },
+  { path: '/keys', methods: ['GET', 'POST'], status: 'supported', client: 'keys.list/create' },
+  { path: '/keys/{id}', methods: ['GET', 'PUT', 'DELETE'], status: 'supported', client: 'keys.get/update/delete' },
   { path: '/collections', methods: ['GET', 'POST'], status: 'supported', client: 'collections.list/create' },
+  { path: '/collections/distributed', methods: ['GET'], status: 'supported', client: 'listCollectionsDistributed' },
+  { path: '/collections/{name}/lang', methods: ['GET'], status: 'supported', client: 'collections.getLanguage' },
   { path: '/collections/{name}/search', methods: ['GET', 'POST'], status: 'supported', client: 'search.search' },
+  { path: '/collections/{name}/documents/maybe', methods: ['GET', 'POST'], status: 'supported', client: 'documents.maybe' },
+  { path: '/collections/{name}/documents/{id}/context', methods: ['GET'], status: 'supported', client: 'documents.context' },
   { path: '/collections/{name}/vector_search', methods: ['GET', 'POST'], status: 'supported', client: 'search.vectorSearch' },
   { path: '/multi_search', methods: ['POST'], status: 'supported', client: 'search.multiSearch' },
   { path: '/sql', methods: ['GET', 'POST'], status: 'supported', client: 'system.sql/execSql' },
@@ -1045,8 +1149,14 @@ export const NODE_CLIENT_ROUTE_COVERAGE = [
   { path: '/sam/debug', methods: ['GET'], status: 'supported', client: 'sam.debug' },
   { path: '/sam/history', methods: ['GET'], status: 'supported', client: 'sam.history' },
   { path: '/sam/pause', methods: ['POST'], status: 'supported', client: 'sam.pause/clearPause' },
+  { path: '/sam/improve', methods: ['POST'], status: 'supported', client: 'sam.improve' },
+  { path: '/sam/flush_actor_metadata', methods: ['POST'], status: 'supported', client: 'sam.flushActorMetadata' },
   { path: '/sam/documents', methods: ['GET'], status: 'supported', client: 'sam.listDocuments' },
+  { path: '/sam/label/add/{collection}/{id}/{label}', methods: ['POST'], status: 'supported', client: 'sam.addLabel' },
   { path: '/sam/documents/{collection}/{id}', methods: ['GET'], status: 'supported', client: 'sam.getDocument/openDocument' },
+  { path: '/modules', methods: ['GET'], status: 'supported', client: 'modules.list' },
+  { path: '/modules/{name}/syntax', methods: ['GET'], status: 'supported', client: 'modules.syntax' },
+  { path: '/modules/{name}/{route}', methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], status: 'supported', client: 'modules.call' },
 ] as const;
 
 export const Exceptions = {
@@ -1076,12 +1186,14 @@ Object.assign(commonJsExport, {
   Documents,
   Search,
   Keys,
+  Users,
   Aliases,
   Overrides,
   Synonyms,
   Stopwords,
   System,
   SAM,
+  Modules,
   Exceptions,
   Utils,
   Config,
