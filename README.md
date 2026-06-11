@@ -18,7 +18,7 @@
 
 The hlquery TypeScript API is the official TypeScript client for [hlquery](https://github.com/hlquery/hlquery). It wraps the HTTP/JSON interface in typed classes so TypeScript and Node.js applications can work with hlquery without manually assembling URLs, request bodies, auth headers, and response parsing.
 
-The library follows the same modular service layout as the JavaScript client: collections, documents, search, SQL, SAM+, aliases, synonyms, stopwords, overrides, keys, and raw request access.
+The library follows the same modular service layout as the JavaScript client: collections, documents, search, SQL, aliases, synonyms, stopwords, overrides, keys, and raw request access.
 
 ### Why use it?
 

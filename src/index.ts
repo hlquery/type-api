@@ -751,134 +751,6 @@ export class System {
   }
 }
 
-export class SAM {
-  constructor(private readonly request: Request) {}
-
-  async search(collectionName: string | null, query: string, params: QueryParams = {}): Promise<Response> {
-    requireNonEmptyString(query, 'SAM query');
-    requireObject(params, 'SAM search params');
-
-    const queryParams: QueryParams = { ...params, q: query };
-
-    if (collectionName !== null && collectionName !== undefined && collectionName !== '') {
-      Validator.validateCollectionName(collectionName);
-      queryParams.collection = collectionName;
-    } else if (!queryParams.all && !queryParams.collections) {
-      throw new Error('Collection name is required unless all=true or collections is provided');
-    }
-
-    return this.request.execute('GET', '/sam/search', null, queryParams);
-  }
-
-  async searchAll(query: string, params: QueryParams = {}): Promise<Response> {
-    requireObject(params, 'SAM search params');
-    return this.search(null, query, { ...params, all: true });
-  }
-
-  async rebuild(collectionName: string, params: QueryParams = {}): Promise<Response> {
-    Validator.validateCollectionName(collectionName);
-    requireObject(params, 'SAM rebuild params');
-    return this.request.execute('POST', '/sam/rebuild', null, { ...params, collection: collectionName });
-  }
-
-  async status(collectionName: string | null = null, params: QueryParams = {}): Promise<Response> {
-    requireObject(params, 'SAM status params');
-    const queryParams: QueryParams = { ...params };
-    if (collectionName) {
-      Validator.validateCollectionName(collectionName);
-      queryParams.collection = collectionName;
-    }
-    return this.request.execute('GET', '/sam/status', null, queryParams);
-  }
-
-  async debug(collectionName: string | null = null, params: QueryParams = {}): Promise<Response> {
-    requireObject(params, 'SAM debug params');
-    const queryParams: QueryParams = { ...params };
-    if (collectionName) {
-      Validator.validateCollectionName(collectionName);
-      queryParams.collection = collectionName;
-    }
-    return this.request.execute('GET', '/sam/debug', null, queryParams);
-  }
-
-  async history(collectionName: string | null = null, limit = 100, params: QueryParams = {}): Promise<Response> {
-    requireObject(params, 'SAM history params');
-    const queryParams: QueryParams = { ...params, limit: Number(limit) };
-    if (collectionName) {
-      Validator.validateCollectionName(collectionName);
-      queryParams.collection = collectionName;
-    }
-    return this.request.execute('GET', '/sam/history', null, queryParams);
-  }
-
-  async pause(pauseUntilMs: number, params: QueryParams = {}): Promise<Response> {
-    requireObject(params, 'SAM pause params');
-    const pause = Number(pauseUntilMs);
-    if (!Number.isFinite(pause) || pause < 0) {
-      throw new Error('SAM pause value must be a non-negative unix millisecond timestamp, or 0 to clear');
-    }
-    return this.request.execute('POST', '/sam/pause', null, { ...params, pause });
-  }
-
-  async clearPause(params: QueryParams = {}): Promise<Response> {
-    return this.pause(0, params);
-  }
-
-  async improve(params: Record<string, unknown> = {}): Promise<Response> {
-    requireObject(params, 'SAM improve params');
-    return this.request.execute('POST', '/sam/improve', params);
-  }
-
-  async flushActorMetadata(params: Record<string, unknown> = {}): Promise<Response> {
-    requireObject(params, 'SAM flush actor metadata params');
-    return this.request.execute('POST', '/sam/flush_actor_metadata', params);
-  }
-
-  async addLabel(collectionName: string, documentId: string | number, label: string, params: Record<string, unknown> = {}): Promise<Response> {
-    Validator.validateCollectionName(collectionName);
-    Validator.validateDocumentId(documentId);
-    requireNonEmptyString(label, 'SAM label');
-    requireObject(params, 'SAM label params');
-    return this.request.execute(
-      'POST',
-      `/sam/label/add/${encode(collectionName)}/${encode(documentId)}/${encode(label)}`,
-      params
-    );
-  }
-
-  async listDocuments(collectionName: string, offset = 0, limit = 20, params: QueryParams = {}): Promise<Response> {
-    Validator.validateCollectionName(collectionName);
-    requireObject(params, 'SAM document list params');
-    return this.request.execute('GET', '/sam/documents', null, {
-      ...params,
-      collection: collectionName,
-      offset: Number(offset),
-      limit: Number(limit),
-    });
-  }
-
-  async getDocument(collectionName: string, documentId: string | number, params: QueryParams = {}): Promise<Response> {
-    Validator.validateCollectionName(collectionName);
-    Validator.validateDocumentId(documentId);
-    requireObject(params, 'SAM document params');
-    return this.request.execute(
-      'GET',
-      `/sam/documents/${encode(collectionName)}/${encode(documentId)}`,
-      null,
-      params
-    );
-  }
-
-  async openDocument(collectionName: string, documentId: string | number, interactionQuery: string | null = null, params: QueryParams = {}): Promise<Response> {
-    const queryParams: QueryParams = { ...params };
-    if (interactionQuery !== null && interactionQuery !== undefined && interactionQuery !== '') {
-      requireNonEmptyString(interactionQuery, 'SAM interaction query');
-      queryParams.interaction_query = interactionQuery;
-    }
-    return this.getDocument(collectionName, documentId, queryParams);
-  }
-}
-
 export class Keys {
   constructor(private readonly request: Request) {}
   list(): Promise<Response> { return this.request.execute('GET', '/keys'); }
@@ -978,7 +850,6 @@ export class Client {
   private readonly _synonyms: Synonyms;
   private readonly _stopwords: Stopwords;
   private readonly _system: System;
-  private readonly _sam: SAM;
   private readonly _modules: Modules;
 
   constructor(baseUrl: string | null = null, options: ClientOptions = {}) {
@@ -998,7 +869,6 @@ export class Client {
     this._synonyms = new Synonyms(this.request);
     this._stopwords = new Stopwords(this.request);
     this._system = new System(this.request);
-    this._sam = new SAM(this.request);
     this._modules = new Modules(this.request);
   }
 
@@ -1050,25 +920,6 @@ export class Client {
   collections(): Collections { return this._collections; }
   documents(): Documents { return this._documents; }
   searchApi(): Search { return this._search; }
-  sam(): SAM { return this._sam; }
-  samSearch(collectionName: string | null, query: string, params: QueryParams = {}): Promise<Response> { return this._sam.search(collectionName, query, params); }
-  samSearchAll(query: string, params: QueryParams = {}): Promise<Response> { return this._sam.searchAll(query, params); }
-  samRebuild(collectionName: string, params: QueryParams = {}): Promise<Response> { return this._sam.rebuild(collectionName, params); }
-  samStatus(collectionName: string | null = null, params: QueryParams = {}): Promise<Response> { return this._sam.status(collectionName, params); }
-  samDebug(collectionName: string | null = null, params: QueryParams = {}): Promise<Response> { return this._sam.debug(collectionName, params); }
-  samHistory(collectionName: string | null = null, limit = 100, params: QueryParams = {}): Promise<Response> { return this._sam.history(collectionName, limit, params); }
-  samPause(pauseUntilMs: number, params: QueryParams = {}): Promise<Response> { return this._sam.pause(pauseUntilMs, params); }
-  samClearPause(params: QueryParams = {}): Promise<Response> { return this._sam.clearPause(params); }
-  samImprove(params: Record<string, unknown> = {}): Promise<Response> { return this._sam.improve(params); }
-  samFlushActorMetadata(params: Record<string, unknown> = {}): Promise<Response> { return this._sam.flushActorMetadata(params); }
-  samAddLabel(collectionName: string, documentId: string | number, label: string, params: Record<string, unknown> = {}): Promise<Response> {
-    return this._sam.addLabel(collectionName, documentId, label, params);
-  }
-  samDocuments(collectionName: string, offset = 0, limit = 20, params: QueryParams = {}): Promise<Response> { return this._sam.listDocuments(collectionName, offset, limit, params); }
-  samDocument(collectionName: string, documentId: string | number, params: QueryParams = {}): Promise<Response> { return this._sam.getDocument(collectionName, documentId, params); }
-  samOpenDocument(collectionName: string, documentId: string | number, interactionQuery: string | null = null, params: QueryParams = {}): Promise<Response> {
-    return this._sam.openDocument(collectionName, documentId, interactionQuery, params);
-  }
   aliases(): Aliases { return this._aliases; }
   overrides(): Overrides { return this._overrides; }
   synonyms(): Synonyms { return this._synonyms; }
@@ -1143,17 +994,6 @@ export const NODE_CLIENT_ROUTE_COVERAGE = [
   { path: '/collections/{name}/vector_search', methods: ['GET', 'POST'], status: 'supported', client: 'search.vectorSearch' },
   { path: '/multi_search', methods: ['POST'], status: 'supported', client: 'search.multiSearch' },
   { path: '/sql', methods: ['GET', 'POST'], status: 'supported', client: 'system.sql/execSql' },
-  { path: '/sam/rebuild', methods: ['POST'], status: 'supported', client: 'sam.rebuild' },
-  { path: '/sam/search', methods: ['GET'], status: 'supported', client: 'sam.search' },
-  { path: '/sam/status', methods: ['GET'], status: 'supported', client: 'sam.status' },
-  { path: '/sam/debug', methods: ['GET'], status: 'supported', client: 'sam.debug' },
-  { path: '/sam/history', methods: ['GET'], status: 'supported', client: 'sam.history' },
-  { path: '/sam/pause', methods: ['POST'], status: 'supported', client: 'sam.pause/clearPause' },
-  { path: '/sam/improve', methods: ['POST'], status: 'supported', client: 'sam.improve' },
-  { path: '/sam/flush_actor_metadata', methods: ['POST'], status: 'supported', client: 'sam.flushActorMetadata' },
-  { path: '/sam/documents', methods: ['GET'], status: 'supported', client: 'sam.listDocuments' },
-  { path: '/sam/label/add/{collection}/{id}/{label}', methods: ['POST'], status: 'supported', client: 'sam.addLabel' },
-  { path: '/sam/documents/{collection}/{id}', methods: ['GET'], status: 'supported', client: 'sam.getDocument/openDocument' },
   { path: '/modules', methods: ['GET'], status: 'supported', client: 'modules.list' },
   { path: '/modules/{name}/syntax', methods: ['GET'], status: 'supported', client: 'modules.syntax' },
   { path: '/modules/{name}/{route}', methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], status: 'supported', client: 'modules.call' },
@@ -1192,7 +1032,6 @@ Object.assign(commonJsExport, {
   Synonyms,
   Stopwords,
   System,
-  SAM,
   Modules,
   Exceptions,
   Utils,

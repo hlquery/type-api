@@ -12,17 +12,6 @@ const client = new hlquery.Client('localhost:9200', {
 assert.strictEqual(typeof client.collections().list, 'function');
 assert.strictEqual(typeof client.documents().add, 'function');
 assert.strictEqual(typeof client.searchApi().vectorSearch, 'function');
-assert.strictEqual(typeof client.sam().search, 'function');
-assert.strictEqual(typeof client.sam().searchAll, 'function');
-assert.strictEqual(typeof client.sam().rebuild, 'function');
-assert.strictEqual(typeof client.sam().status, 'function');
-assert.strictEqual(typeof client.sam().debug, 'function');
-assert.strictEqual(typeof client.sam().history, 'function');
-assert.strictEqual(typeof client.sam().pause, 'function');
-assert.strictEqual(typeof client.sam().clearPause, 'function');
-assert.strictEqual(typeof client.sam().listDocuments, 'function');
-assert.strictEqual(typeof client.sam().getDocument, 'function');
-assert.strictEqual(typeof client.sam().openDocument, 'function');
 assert.strictEqual(typeof client.sql, 'function');
 assert.strictEqual(typeof client.execSql, 'function');
 assert.strictEqual(typeof client.sqlSearch, 'function');
