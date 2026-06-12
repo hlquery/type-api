@@ -733,7 +733,6 @@ export class System {
   selfCheck(): Promise<Response> { return this.request.execute('GET', '/self-check'); }
   storageStatus(): Promise<Response> { return this.request.execute('GET', '/admin/storage_status'); }
   searchConfig(): Promise<Response> { return this.request.execute('GET', '/search-config'); }
-  llm(): Promise<Response> { return this.request.execute('GET', '/llm'); }
   updateCounters(params: QueryParams = {}): Promise<Response> { return this.request.execute('GET', '/update-counters', null, params); }
   repair(params: QueryParams = {}): Promise<Response> { return this.request.execute('GET', '/repair', null, params); }
   updateCountersPost(body: Record<string, unknown> = {}): Promise<Response> { return this.request.execute('POST', '/update-counters', body); }
@@ -896,7 +895,6 @@ export class Client {
   selfCheck(): Promise<Response> { return this._system.selfCheck(); }
   storageStatus(): Promise<Response> { return this._system.storageStatus(); }
   searchConfig(): Promise<Response> { return this._system.searchConfig(); }
-  llm(): Promise<Response> { return this._system.llm(); }
   updateCounters(params: QueryParams = {}): Promise<Response> { return this._system.updateCounters(params); }
   repair(params: QueryParams = {}): Promise<Response> { return this._system.repair(params); }
   updateCountersPost(body: Record<string, unknown> = {}): Promise<Response> { return this._system.updateCountersPost(body); }
@@ -978,7 +976,6 @@ export const NODE_CLIENT_ROUTE_COVERAGE = [
   { path: '/metrics', methods: ['GET'], status: 'supported', client: 'system.metrics' },
   { path: '/metrics.json', methods: ['GET'], status: 'supported', client: 'system.metricsJson' },
   { path: '/search-config', methods: ['GET'], status: 'supported', client: 'system.searchConfig' },
-  { path: '/llm', methods: ['GET'], status: 'supported', client: 'system.llm' },
   { path: '/update-counters', methods: ['GET', 'POST'], status: 'supported', client: 'system.updateCounters/updateCountersPost' },
   { path: '/repair', methods: ['GET', 'POST'], status: 'supported', client: 'system.repair/repairPost' },
   { path: '/users', methods: ['GET', 'POST'], status: 'supported', client: 'users.list/create' },
