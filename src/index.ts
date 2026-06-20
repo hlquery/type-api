@@ -902,9 +902,9 @@ export class Client {
   sql(sql: string, params: QueryParams = {}): Promise<Response> { return this._system.sql(sql, params); }
   execSql(sql: string): Promise<Response> { return this._system.execSql(sql); }
 
-  clusterHealth(): Promise<Response> { return this.request.execute('GET', '/cluster/health'); }
-  clusterStats(): Promise<Response> { return this.request.execute('GET', '/cluster/stats'); }
-  clusterNodes(): Promise<Response> { return this.request.execute('GET', '/cluster/nodes'); }
+  clusterHealth(): Promise<Response> { return this._system.health(); }
+  clusterStats(): Promise<Response> { return this._system.stats(); }
+  clusterNodes(): Promise<Response> { return this.links(); }
   links(): Promise<Response> { return this.request.execute('GET', '/links'); }
   linksPing(): Promise<Response> { return this.request.execute('GET', '/links/ping'); }
   linksConnect(endpointOrHost: string, port: number | null = null): Promise<Response> {
