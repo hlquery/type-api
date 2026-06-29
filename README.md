@@ -93,3 +93,26 @@ async function main(): Promise<void> {
 
 main().catch(console.error);
 ```
+
+### Contributing
+
+We welcome contributions from the community! All contributions must be released under the BSD 3-Clause license.
+
+### How to Contribute
+
+- Check existing [TypeScript API issues](https://github.com/hlquery/type-api/issues) or create new ones
+- Contribute TypeScript client changes to [hlquery/type-api](https://github.com/hlquery/type-api)
+- Contribute shared server/API changes to [hlquery/hlquery](https://github.com/hlquery/hlquery)
+- Test and report bugs against the TypeScript client
+- Improve TypeScript-specific documentation and examples
+
+### Community
+
+- [Documentation](https://docs.hlquery.com)
+- [X (Twitter)](https://x.com/hlquery)
+- [TypeScript API GitHub](https://github.com/hlquery/type-api)
+- [hlquery GitHub](https://github.com/hlquery/hlquery)
+
+### License
+
+The hlquery TypeScript API is licensed under the [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
