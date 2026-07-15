@@ -108,10 +108,10 @@ We welcome contributions from the community! All contributions must be released 
 
 ### Community
 
-- [Documentation](https://docs.hlquery.com)
-- [X (Twitter)](https://x.com/hlquery)
-- [TypeScript API GitHub](https://github.com/hlquery/type-api)
-- [hlquery GitHub](https://github.com/hlquery/hlquery)
+- 📖 [Documentation](https://docs.hlquery.com)
+- 🐦 [X (Twitter)](https://x.com/hlquery)
+- 🔷 [TypeScript API GitHub](https://github.com/hlquery/type-api)
+- 📦 [hlquery GitHub](https://github.com/hlquery/hlquery)
 
 ### License
 
