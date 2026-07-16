@@ -630,6 +630,11 @@ export class Search {
     return this.request.execute(method, '/search', body, queryParams);
   }
 
+  /** Alias for globalSearch: search a merged result set across all collections. */
+  searchAll(params: SearchParams = {}): Promise<Response> {
+    return this.globalSearch(params);
+  }
+
   async vectorSearch(collectionName: string, params: VectorSearchParams = {}): Promise<Response> {
     Validator.validateCollectionName(collectionName);
     const queryParams: QueryParams = {};
@@ -722,6 +727,7 @@ export class System {
   stats(): Promise<Response> { return this.request.execute('GET', '/stats'); }
   metrics(): Promise<Response> { return this.request.execute('GET', '/metrics'); }
   metricsJson(): Promise<Response> { return this.request.execute('GET', '/metrics.json'); }
+  metricsHistory(): Promise<Response> { return this.request.execute('GET', '/metrics/history'); }
   connections(): Promise<Response> { return this.request.execute('GET', '/connections'); }
   rocksdb(): Promise<Response> { return this.request.execute('GET', '/rocksdb'); }
   rocksdbInternal(): Promise<Response> { return this.request.execute('GET', '/_rocksdb'); }
@@ -733,6 +739,9 @@ export class System {
   selfCheck(): Promise<Response> { return this.request.execute('GET', '/self-check'); }
   storageStatus(): Promise<Response> { return this.request.execute('GET', '/admin/storage_status'); }
   searchConfig(): Promise<Response> { return this.request.execute('GET', '/search-config'); }
+  configFiles(): Promise<Response> { return this.request.execute('GET', '/config-files'); }
+  cache(): Promise<Response> { return this.request.execute('GET', '/cache'); }
+  debugCounters(): Promise<Response> { return this.request.execute('GET', '/debug/counters'); }
   updateCounters(params: QueryParams = {}): Promise<Response> { return this.request.execute('GET', '/update-counters', null, params); }
   repair(params: QueryParams = {}): Promise<Response> { return this.request.execute('GET', '/repair', null, params); }
   updateCountersPost(body: Record<string, unknown> = {}): Promise<Response> { return this.request.execute('POST', '/update-counters', body); }
@@ -781,6 +790,16 @@ export class Modules {
     const suffix = route ? `/${route.replace(/^\/+/, '')}` : '';
     return this.request.execute(method, `/modules/${encode(name)}${suffix}`, body, params);
   }
+}
+
+export class Presets {
+  constructor(private readonly request: Request) {}
+  list(): Promise<Response> { return this.request.execute('GET', '/presets'); }
+  get(name: string): Promise<Response> { requireNonEmptyString(name, 'Preset name'); return this.request.execute('GET', `/presets/${encode(name)}`); }
+  create(name: string, preset: Record<string, unknown>): Promise<Response> { requireNonEmptyString(name, 'Preset name'); requireObject(preset, 'Preset'); return this.request.execute('POST', `/presets/${encode(name)}`, preset); }
+  update(name: string, preset: Record<string, unknown>): Promise<Response> { requireNonEmptyString(name, 'Preset name'); requireObject(preset, 'Preset'); return this.request.execute('PUT', `/presets/${encode(name)}`, preset); }
+  upsert(name: string, preset: Record<string, unknown>): Promise<Response> { return this.update(name, preset); }
+  delete(name: string): Promise<Response> { requireNonEmptyString(name, 'Preset name'); return this.request.execute('DELETE', `/presets/${encode(name)}`); }
 }
 
 export class Aliases {
@@ -850,6 +869,7 @@ export class Client {
   private readonly _stopwords: Stopwords;
   private readonly _system: System;
   private readonly _modules: Modules;
+  private readonly _presets: Presets;
 
   constructor(baseUrl: string | null = null, options: ClientOptions = {}) {
     const opts = Config.mergeDefaults(options);
@@ -869,6 +889,7 @@ export class Client {
     this._stopwords = new Stopwords(this.request);
     this._system = new System(this.request);
     this._modules = new Modules(this.request);
+    this._presets = new Presets(this.request);
   }
 
   setAuthToken(token: string, method: AuthMethod = 'bearer'): this { this.request.setAuthToken(token, method); return this; }
@@ -885,6 +906,7 @@ export class Client {
   bootStatus(): Promise<Response> { return this._system.bootStatus(); }
   metrics(): Promise<Response> { return this._system.metrics(); }
   metricsJson(): Promise<Response> { return this._system.metricsJson(); }
+  metricsHistory(): Promise<Response> { return this._system.metricsHistory(); }
   connections(): Promise<Response> { return this._system.connections(); }
   rocksdb(): Promise<Response> { return this._system.rocksdb(); }
   rocksdbInternal(): Promise<Response> { return this._system.rocksdbInternal(); }
@@ -895,6 +917,9 @@ export class Client {
   selfCheck(): Promise<Response> { return this._system.selfCheck(); }
   storageStatus(): Promise<Response> { return this._system.storageStatus(); }
   searchConfig(): Promise<Response> { return this._system.searchConfig(); }
+  configFiles(): Promise<Response> { return this._system.configFiles(); }
+  cache(): Promise<Response> { return this._system.cache(); }
+  debugCounters(): Promise<Response> { return this._system.debugCounters(); }
   updateCounters(params: QueryParams = {}): Promise<Response> { return this._system.updateCounters(params); }
   repair(params: QueryParams = {}): Promise<Response> { return this._system.repair(params); }
   updateCountersPost(body: Record<string, unknown> = {}): Promise<Response> { return this._system.updateCountersPost(body); }
@@ -926,6 +951,7 @@ export class Client {
   keys(): Keys { return this._keys; }
   users(): Users { return this._users; }
   modules(): Modules { return this._modules; }
+  presets(): Presets { return this._presets; }
 
   listCollections(offset = 0, limit = 10): Promise<Response> { return this._collections.list(offset, limit); }
   listCollectionsDistributed(): Promise<Response> { return this.request.execute('GET', '/collections/distributed'); }
@@ -944,6 +970,7 @@ export class Client {
   sqlSearch(collectionName: string, sql: string, params: QueryParams = {}): Promise<Response> { return this._search.sql(collectionName, sql, params); }
   vectorSearch(collectionName: string, params: VectorSearchParams = {}): Promise<Response> { return this._search.vectorSearch(collectionName, params); }
   globalSearch(params: SearchParams = {}): Promise<Response> { return this._search.globalSearch(params); }
+  searchAll(params: SearchParams = {}): Promise<Response> { return this._search.searchAll(params); }
   executeRequest(method: HttpMethod | string, requestPath: string, body: RequestBody = null, queryParams: QueryParams = {}): Promise<Response> {
     return this.request.execute(method, requestPath, body, queryParams);
   }
@@ -990,6 +1017,7 @@ export const NODE_CLIENT_ROUTE_COVERAGE = [
   { path: '/collections/{name}/documents/{id}/context', methods: ['GET'], status: 'supported', client: 'documents.context' },
   { path: '/collections/{name}/vector_search', methods: ['GET', 'POST'], status: 'supported', client: 'search.vectorSearch' },
   { path: '/multi_search', methods: ['POST'], status: 'supported', client: 'search.multiSearch' },
+  { path: '/search', methods: ['GET', 'POST'], status: 'supported', client: 'search.globalSearch/searchAll' },
   { path: '/sql', methods: ['GET', 'POST'], status: 'supported', client: 'system.sql/execSql' },
   { path: '/modules', methods: ['GET'], status: 'supported', client: 'modules.list' },
   { path: '/modules/{name}/syntax', methods: ['GET'], status: 'supported', client: 'modules.syntax' },

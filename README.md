@@ -106,6 +106,15 @@ We welcome contributions from the community! All contributions must be released 
 - Test and report bugs against the TypeScript client
 - Improve TypeScript-specific documentation and examples
 
+### Search all collections
+
+```typescript
+const result = await client.searchAll({ q: 'research', limit: 20 });
+const selected = await client.searchAll({ body: { q: 'research', collections: ['universities', 'science'] } });
+```
+
+`globalSearch` remains available as an equivalent name. Results are globally merged and each hit includes `document._collection`.
+
 ### Community
 
 - 📖 [Documentation](https://docs.hlquery.com)
